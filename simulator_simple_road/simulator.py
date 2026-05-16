@@ -1,6 +1,8 @@
 import pygame,sys,os,math  #[MODIFICIRANO] dodani os, math
 import sqlite3, random #[NOVO]
 from pygame.locals import *
+import obd                    #[NOVO]
+#connection = obd.OBD("COM3")  #spajanje prek COM3 porta (trenutno golf)
 
 #[ORIGINAL] - boje
 BLACK=pygame.color.THECOLORS["black"]
@@ -15,7 +17,7 @@ HALF_SCREEN_HEIGHT=int(SCREEN_HEIGHT/2)
 
 #[NOVO] - putanje za bazu
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH  = r"D:\FOI\3. godina\ZAVRSNI\baza_local\glazba.db"
+DB_PATH  = r"D:\FOI\3. godina\ZAVRSNI\glazba.db"
 
 #[NOVO] - brzinski pragovi za odabir klastera (privremeno, zamijenit ce KNN)
 SPEED_SLOW = 60   #km/h ispod ovoga - spori klaster
@@ -28,6 +30,12 @@ CLUSTER_CHANGE_DELAY = 4.0  # sekundi
 #[NOVO] - fade trajanje u ms
 FADE_MS = 1000
 
+#[NOVO] - kerosene granica
+KEROSENE = 170
+
+#[NOVO] - limit kocenja za stisavanje muzike (u km/h po sekundi)
+KOCENJE_TIHO = 10
+
 #[NOVO] - mapiranje naziva klastera na cluster ID iz baze - nije svaki put isto nekad je naopacke (2 je brzo, a 0 sporo) !!!!!!!!!!
 CLUSTER_MAP = {
     "slow": 2,   # klaster s najnizim tempom
@@ -37,7 +45,7 @@ CLUSTER_MAP = {
 
 #[NOVO] - glazbene funkcije
 def load_songs(db_path):
-    """Učitaj sve pjesme iz baze u memoriju."""
+    #Učitaj sve pjesme iz baze u memoriju.
     conn = sqlite3.connect(db_path)
     cur  = conn.cursor()
     cur.execute("SELECT id, title, artist, tempo, cluster, file_path FROM songs WHERE file_path IS NOT NULL AND cluster IS NOT NULL")
@@ -46,7 +54,7 @@ def load_songs(db_path):
     return [{"id": r[0], "title": r[1], "artist": r[2], "tempo": r[3], "cluster": r[4], "file_path": r[5]} for r in rows]
 
 def get_cluster(speed):
-    """Vrati naziv klastera na temelju brzine."""
+    #Vrati naziv klastera na temelju brzine.
     if speed < SPEED_SLOW:
         return "slow"
     elif speed < SPEED_FAST:
@@ -55,7 +63,7 @@ def get_cluster(speed):
         return "fast"
 
 def pick_song(songs, cluster, last_id=None):
-    """Odaberi random pjesmu iz odgovarajućeg klastera, ne ponavljaj istu."""
+    #Odaberi random pjesmu iz odgovarajućeg klastera, ne ponavljaj istu.
     cluster_id = CLUSTER_MAP[cluster]
     pool = [s for s in songs if s["cluster"] == cluster_id]
 
@@ -65,7 +73,7 @@ def pick_song(songs, cluster, last_id=None):
     return random.choice(pool) if pool else None
 
 def play_song(song):
-    """Učitaj i pusti pjesmu s fade in."""
+    #Učitaj i pusti pjesmu s fade in.
     if not song or not song["file_path"]:
         return
     try:
@@ -125,12 +133,17 @@ def main():
 
     #[NOVO] - pusti prvu pjesmu (spori klaster, vozilo stoji na pocetku)
     current_cluster = get_cluster(speed)
-    current_song = pick_song(songs, current_cluster)
+    if speed >= KEROSENE: #provjera za kerosene
+        current_song = next((s for s in songs if "Kerosene" in s["title"]), None)
+    else:
+        current_song = pick_song(songs, current_cluster)
+
     if current_song:
         play_song(current_song)
         last_song_id = current_song["id"]
 
     #[MODIFICIRANO] - Game loop
+    prev_speed = 0.0#pracenje przine za naglo kocenje i stisavanje muzike
     while True:
 
         dt = clock.tick(30) / 1000.0  #[MODIFICIRANO] pohranjen u var (orig: nije korišten)
@@ -156,8 +169,17 @@ def main():
                 road_pos += road_acceleration * (speed / max_speed)
                 if road_pos >= texture_position_threshold:
                     road_pos = 0
+        
+        #speed = connection.query(obd.commands.SPEED).value.magnitude
 
-        #glasnoCa ovisno o brzini (ispod 30 km/h - fade in jacina)
+        #naglo kocenje - stisavanje muzike
+        deceleration = (prev_speed - speed) / dt if dt > 0 else 0
+        if deceleration > KOCENJE_TIHO:  # km/h po sekundi
+            pygame.mixer.music.set_volume(0.1)
+
+        prev_speed = speed
+
+        #glasnoca ovisno o brzini (ispod 30 km/h - fade in jacina)
         if speed < 45:
             volume = speed / 45.0
         else:
@@ -179,7 +201,11 @@ def main():
             if was_paused:
                 was_paused      = False
                 current_cluster = get_cluster(speed)
-                current_song    = pick_song(songs, current_cluster, last_song_id)
+                if speed >= KEROSENE:#provjera za kerosene
+                    current_song = next((s for s in songs if "Kerosene" in s["title"]), None)
+                else:
+                    current_song    = pick_song(songs, current_cluster, last_song_id)
+                
                 if current_song:
                     play_song(current_song)
                     last_song_id = current_song["id"]
@@ -203,7 +229,10 @@ def main():
 
                 #potvrdi promjenu tek nakon CLUSTER_CHANGE_DELAY sekundi
                 if candidate_cluster and cluster_change_timer >= CLUSTER_CHANGE_DELAY:
-                    pending_song         = pick_song(songs, candidate_cluster, last_song_id)
+                    if speed >= KEROSENE:#provjera za kerosene
+                        pending_song = next((s for s in songs if "Kerosene" in s["title"]), None)
+                    else:
+                        pending_song         = pick_song(songs, candidate_cluster, last_song_id)
                     current_cluster      = candidate_cluster
                     candidate_cluster    = None
                     cluster_change_timer = 0.0
@@ -221,7 +250,11 @@ def main():
 
             #pjesma završila prirodno - pusti sljedeću iz istog klastera s fade in
             if not fading_out and not was_paused and not pygame.mixer.music.get_busy():
-                current_song = pick_song(songs, current_cluster, last_song_id)
+                if speed >= KEROSENE:
+                    current_song = next((s for s in songs if "Kerosene" in s["title"]), None)
+                else:
+                    current_song = pick_song(songs, current_cluster, last_song_id)
+                
                 if current_song:
                     play_song(current_song)
                     last_song_id = current_song["id"]

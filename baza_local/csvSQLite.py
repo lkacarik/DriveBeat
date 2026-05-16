@@ -5,8 +5,8 @@ import os
 # -------------------------------------------------------
 # POSTAVKE — promijeni po potrebi
 # -------------------------------------------------------
-CSV_PATH = "D:\\FOI\\3. godina\\ZAVRSNI\\baza_local\\zavrsni_test_local.csv"  # putanja do Exportify CSV-a
-DB_PATH = "D:\\FOI\\3. godina\\ZAVRSNI\\baza_local\\glazba.db"                # gdje će se kreirati SQLite baza
+CSV_PATH = "D:\\FOI\\3. godina\\ZAVRSNI\\zavrsni_test_local.csv"  # putanja do Exportify CSV-a
+DB_PATH = "D:\\FOI\\3. godina\\ZAVRSNI\\glazba.db"                # gdje će se kreirati SQLite baza
 # -------------------------------------------------------
 
 def extract_spotify_id(uri: str) -> str:

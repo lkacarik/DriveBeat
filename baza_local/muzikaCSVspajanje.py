@@ -4,7 +4,7 @@ import os
 # -------------------------------------------------------
 # POSTAVKE — promijeni po potrebi
 # -------------------------------------------------------
-DB_PATH = r"D:\FOI\3. godina\ZAVRSNI\baza_local\glazba.db"
+DB_PATH = r"D:\FOI\3. godina\ZAVRSNI\glazba.db"
 MUZIKA_DIR = r"D:\FOI\3. godina\ZAVRSNI\muzika"
 # -------------------------------------------------------
 

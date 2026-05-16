@@ -12,7 +12,7 @@ warnings.filterwarnings("ignore")
 # -------------------------------------------------------
 # POSTAVKE
 # -------------------------------------------------------
-DB_PATH = r"D:\FOI\3. godina\ZAVRSNI\baza_local\glazba.db"
+DB_PATH = r"D:\FOI\3. godina\ZAVRSNI\glazba.db"
 K = 3
 FEATURES = ['tempo', 'energy', 'valence', 'danceability', 'acousticness', 'instrumentalness']
 # -------------------------------------------------------
