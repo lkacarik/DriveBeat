@@ -216,3 +216,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+#projektni fajlovi koji ne idu na github
+glazba.db
+zavrsni_test_local.csv
+muzika/
