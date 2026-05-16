@@ -179,14 +179,20 @@ def main():
 
         prev_speed = speed
 
-        #glasnoca ovisno o brzini (ispod 30 km/h - fade in jacina)
-        if speed < 45:
-            volume = speed / 45.0
+        #glasnoca ovisno o brzini (ispod 50 km/h - fade in jacina)
+        if speed < 50:
+            volume = speed / 50.0
         else:
             volume = 1.0
         pygame.mixer.music.set_volume(volume)            
 
         #[NOVO] - logika glazbe
+        #kerosene triger da se odma pusti
+        if speed >= KEROSENE and current_song and "Kerosene" not in current_song["title"]:
+            pending_song = next((s for s in songs if "Kerosene" in s["title"]), None)
+            fading_out = True
+            pygame.mixer.music.fadeout(FADE_MS)
+        
         if speed < 1:
             #edge case: vozilo stoji - pauziraj s fadeoutom
             if not was_paused:
