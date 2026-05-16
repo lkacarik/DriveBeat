@@ -17,7 +17,7 @@ HALF_SCREEN_HEIGHT=int(SCREEN_HEIGHT/2)
 
 #[NOVO] - putanje za bazu
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH  = r"D:\FOI\3. godina\ZAVRSNI\glazba.db"
+DB_PATH  = r"D:\FOI\3. godina\ZAVRSNI\DriveBeat\glazba.db"
 
 #[NOVO] - brzinski pragovi za odabir klastera (privremeno, zamijenit ce KNN)
 SPEED_SLOW = 60   #km/h ispod ovoga - spori klaster

@@ -4,12 +4,12 @@ import os
 # -------------------------------------------------------
 # POSTAVKE — promijeni po potrebi
 # -------------------------------------------------------
-DB_PATH = r"D:\FOI\3. godina\ZAVRSNI\glazba.db"
-MUZIKA_DIR = r"D:\FOI\3. godina\ZAVRSNI\muzika"
+DB_PATH = r"D:\FOI\3. godina\ZAVRSNI\DriveBeat\glazba.db"
+MUZIKA_DIR = r"D:\FOI\3. godina\ZAVRSNI\DriveBeat\muzika"
 # -------------------------------------------------------
 
 def normalize(s: str) -> str:
-    """Makni razmake s rubova i pretvori u mala slova za usporedbu."""
+    #Makni razmake s rubova i pretvori u mala slova za usporedbu.
     return s.strip().lower()
 
 def main():
