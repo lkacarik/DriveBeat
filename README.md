@@ -15,9 +15,8 @@ Brzina vozila (OBD2 adapter) mapira se na audio feature Spotify pjesami. K-Means
 ## Faze razvoja
 
 - **Faza 1**  — pygame simulator s K-Means klasteriranjem i lokalnim audio fajlovima - GOTOVO
-- **Faza 1.5** — prototip na pravom autu s OBD2 adapterom (isto kao faza 1 ali sa OBD adapterom i nekoliko dodatnih mogućnosti) - GOTOVO
 - **Faza 2** — KNN odabiro pjesme + Spotify integracija
-- **Faza 3** — RPM kao dodatni ulaz uz brzinu, BPM matching pri tranziciji i dodatno po potrebi
+- **Faza 3** — OBD citanje brzine iz pravog auta, RPM kao dodatni ulaz uz brzinu, BPM matching pri tranziciji i dodatno po potrebi
 
 ---
 
@@ -40,7 +39,8 @@ baza_local/
 └── zavrsni_test_local.csv
 
 simulator_simple_road/
-└── simulator.py          # pygame simulator vožnje
+├── simulator.py          # pygame simulator vožnje
+└── simple_road.py  	  # originalna py datoteka simple road
 ```
 
 ---

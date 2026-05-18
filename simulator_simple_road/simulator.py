@@ -1,8 +1,6 @@
 import pygame,sys,os,math  #[MODIFICIRANO] dodani os, math
 import sqlite3, random #[NOVO]
 from pygame.locals import *
-import obd                    #[NOVO]
-#connection = obd.OBD("COM3")  #spajanje prek COM3 porta (trenutno golf)
 
 #[ORIGINAL] - boje
 BLACK=pygame.color.THECOLORS["black"]
@@ -31,10 +29,10 @@ CLUSTER_CHANGE_DELAY = 4.0  # sekundi
 FADE_MS = 1000
 
 #[NOVO] - kerosene granica
-KEROSENE = 170
+KEROSENE = 180
 
 #[NOVO] - limit kocenja za stisavanje muzike (u km/h po sekundi)
-KOCENJE_TIHO = 10
+KOCENJE_TIHO = 18 #mora bit isto ko snaga kocenja dolje da se aktivira
 
 #[NOVO] - mapiranje naziva klastera na cluster ID iz baze - nije svaki put isto nekad je naopacke (2 je brzo, a 0 sporo) !!!!!!!!!!
 CLUSTER_MAP = {
@@ -115,7 +113,7 @@ def main():
     #[NOVO] - speedometar varijable
     speed     = 0.0
     max_speed = 180.0
-    accel     = 10.0   # km/h po sekundi
+    accel     = 12.0   # km/h po sekundi
     brake     = 18.0   # km/h po sekundi
     friction  = 3.0    # km/h po sekundi
     clock     = pygame.time.Clock()
@@ -143,7 +141,7 @@ def main():
         last_song_id = current_song["id"]
 
     #[MODIFICIRANO] - Game loop
-    prev_speed = 0.0#pracenje przine za naglo kocenje i stisavanje muzike
+    prev_speed = 0.0 #pracenje przine za naglo kocenje i stisavanje muzike
     while True:
 
         dt = clock.tick(30) / 1000.0  #[MODIFICIRANO] pohranjen u var (orig: nije korišten)
@@ -169,8 +167,6 @@ def main():
                 road_pos += road_acceleration * (speed / max_speed)
                 if road_pos >= texture_position_threshold:
                     road_pos = 0
-        
-        #speed = connection.query(obd.commands.SPEED).value.magnitude
 
         #naglo kocenje - stisavanje muzike
         deceleration = (prev_speed - speed) / dt if dt > 0 else 0
@@ -180,8 +176,8 @@ def main():
         prev_speed = speed
 
         #glasnoca ovisno o brzini (ispod 50 km/h - fade in jacina)
-        if speed < 50:
-            volume = speed / 50.0
+        if speed < 30:
+            volume = speed / 30.0
         else:
             volume = 1.0
         pygame.mixer.music.set_volume(volume)            
