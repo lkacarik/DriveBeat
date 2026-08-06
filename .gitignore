@@ -221,3 +221,4 @@ __marimo__/
 glazba.db
 zavrsni_test_local.csv
 muzika/
+knn_eval.py
