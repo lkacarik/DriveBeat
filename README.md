@@ -1,58 +1,81 @@
 # DriveBeat
 
-Sustav koji čita brzinu vozila u realnom vremenu i automatski odabire glazbu odgovarajućeg tempa i energije.
-
-Završni rad — FOI Varaždin, 2026.
+Sustav koji u stvarnom vremenu čita brzinu vozila i automatski odabire te pušta glazbu odgovarajućeg tempa i energije — što brža vožnja, energičnija glazba, što sporija vožnja, mirnija glazba.
 
 ---
 
-## Faze razvoja
+## Kako radi
 
-- **Faza 1**  — pygame simulator s K-Means klasteriranjem i lokalnim audio fajlovima - GOTOVO
-- **Faza 2** — KNN odabire pjesme + Spotify integracija
-- **Faza 3** — OBD citanje brzine iz auta, BPM matching pri tranziciji i dodatno po potrebi
+1. **Brzina** dolazi s tipkovnice (simulator, za testiranje) ili iz pravog auta preko USB OBD adaptera
+2. **KNN model** na temelju brzine bira pjesmu čiji su audio featuri najbliži ciljanom profilu za tu brzinu
+3. **Reprodukcija** ide preko Spotify Connect API-ja ili preko lokalnih audio fajlova
+4. **K-Means klasteriranje** služi kao neovisna evaluacija — provjerava slaže li se KNN odabir sa stvarnim klasterima pjesama
+
+---
+
+## Tech stack
+
+| Komponenta | Tehnologija |
+|---|---|
+| Jezik | Python |
+| Strojno učenje | (KNN, K-Means) |
+| Reprodukcija | pygame (lokalno) / Spotipy (Spotify Connect) |
+| Očitanje brzine | python-obd (USB OBD2 adapter) |
+| Baza podataka | SQLite |
+| Audio featuri | Exportify (offline export, zbog gašenja Spotify Audio Features endpointa) |
 
 ---
 
 ## Struktura projekta
 
 ```
-baza_local/
-├── csvSQLite.py          # puni SQLite bazu iz Exportify CSV-a
-├── muzikaCSVspajanje.py  # upisuje putanje lokalnih audio fileova u bazu
-├── kmeans_klaster.py     # K-Means klasteriranje, upisuje cluster u bazu
-├── kmeans_klaster.ipynb  # isti kod + Elbow graf i Silhouette Score analiza za testiranje
-└── zavrsni_test_local.csv #csv datoteka sa imenima i featurima audio fajlova
-
-simulator_simple_road/
-├── simulator.py          # pygame simulator vožnje
-└── simple_road.py  	  # originalna py datoteka simple road
+DriveBeat/
+├── DriveBeat.py               # launcher - ASCII izbornik, pokrece sve ostalo
+├── skripte/
+│   ├── azuriraj_bazu.py       # orkestracija - puni bazu iz Exportify CSV-a i klasterira
+│   ├── csvSQLite.py           # prebacuje podatke iz Exportify CSV-a u SQLite bazu
+│   ├── muzikaCSVspajanje.py   # spaja pjesme s lokalnim audio fajlovima
+│   ├── kmeans_klaster.py      # K-Means klasteriranje
+│   ├── knn_odabir.py          # KNN odabir pjesme
+│   ├── playback.py            # reprodukcija (lokalno/Spotify)
+│   └── obd_reader.py          # citanje brzine s OBD adaptera
+├── simulator/
+│   └── simulator.py           # pygame simulator + prava voznja (OBD)
+├── muzika/                    # folder za lokalne audio fajlove
+├── exportify/                 # folder za Exportify CSV
 ```
 
 ---
 
 ## Pokretanje
 
-### 1. Instalacija dependencies
+### 1. Instalacija ovisnosti (ako treba)
 ```bash
-pip install pygame scikit-learn pandas python-obd spotipy
+pip install pygame
+pip install scikit-learn
+pip install pandas
+pip install spotipy
+pip install python-dotenv
+pip install python-obd
 ```
 
-### 2. Priprema lokalne baze
+### 2. Priprema baze pjesama
+1. Složi Spotify playlistu
+2. Exportaj CSV preko [Exportify](https://exportify.net), spremi u `exportify/`
+3. Za lokalni playback dodaj odgovarajuće `.wma` fajlove u `muzika/`
+4. Pokreni `DriveBeat.py` → opcija **1. Ažuriraj bazu**
 
-> **Napomena:** prije pokretanja skripti potrebno je iz odabrane spotify playliste exportati CSV datoteku pomoću [Exportify](https://exportify.net). CSV datoteka mora biti u istom direktorija kao i py skripte te se svi audio fajlovi moraju rucno skinuti.
-
-```bash
-python baza_local/csvSQLite.py
-python baza_local/muzikaCSVspajanje.py
-python baza_local/kmeans_klaster.py
+### 3. Spotify Developer App (ako se koristi Spotify Connect playback)
+Registriraj app na [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard), zatim u root folderu kreiraj `.env`:
 ```
-
-### 3. Pokretanje simulatora
-```bash
-python simulator_simple_road/simulator.py
+SPOTIPY_CLIENT_ID=...
+SPOTIPY_CLIENT_SECRET=...
+SPOTIPY_REDIRECT_URI=http://127.0.0.1:8888/callback
 ```
+> Redirect URI mora koristiti `127.0.0.1`. Račun mora imati aktivan Premium.
 
-> **Napomena:** prije pokretanja provjeriti `DB_PATH` u svakoj skripti i postaviti na lokaciju kreirane baze `glazba.db`. Također provjeriti `CLUSTER_MAP` u `simulator.py` nakon svakog ponovnog klasteriranja jer se redoslijed klastera može promijeniti prilikom novog pokretanja.
-
----
+### 4. Pokretanje
+```bash
+python DriveBeat.py
+```
+Izbornik nudi simulator (tipkovnica) ili voznju (OBD, port se postavlja preko `OBD_PORT` u `simulator.py`)
